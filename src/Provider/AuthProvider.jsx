@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AuthContext } from "./AuthContext";
 import {
   createUserWithEmailAndPassword,
   GithubAuthProvider,
   GoogleAuthProvider,
+  onAuthStateChanged,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -15,9 +16,12 @@ import { auth } from "../Firebase/firebase.init";
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
 
   //  emil pass signUp
   const createWithEmail = (email, password) => {
+    // setLoading(true)
     return createUserWithEmailAndPassword(auth, email, password);
   };
 
@@ -73,7 +77,20 @@ const AuthProvider = ({ children }) => {
     signOutFnc,
     gitSignin,
     sendRestPass,
+    loading,
+    setLoading
   };
+
+  useEffect(() => {
+    const unSubscribe = onAuthStateChanged(auth, (currentUser) => {
+      console.log(currentUser);
+      setUser(currentUser);
+      setLoading(false)
+    });
+    return () => {
+      unSubscribe();
+    };
+  }, []);
 
   return <AuthContext value={authData}>{children}</AuthContext>;
 };

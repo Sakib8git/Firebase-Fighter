@@ -6,7 +6,7 @@ import { IoEyeOff } from "react-icons/io5";
 import { AuthContext } from "../Provider/AuthContext";
 
 const SignUp = () => {
-  const { createWithEmail, updateUser, verifyMail } = use(AuthContext);
+  const { createWithEmail, updateUser, verifyMail, setLoading } = use(AuthContext);
   // const [error, setError]= useState("")
   const navigate = useNavigate();
   const [show, setShow] = useState(false);
@@ -33,17 +33,18 @@ const SignUp = () => {
         console.log(result);
         updateUser(displayName, photoURL)
           .then(() => {
-            console.log(result);
+            // console.log(result);
             verifyMail().then(() => {
               toast("Verifi mail sent")
             });
             toast("successfully creat an account");
+            // setLoading(false)
           })
           .catch((error) => {
             toast(error.message);
           });
         e.target.reset();
-        navigate("/signin");
+        // navigate("/signin");
       })
       .catch((error) => {
         console.log(error);
