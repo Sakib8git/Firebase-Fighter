@@ -1,30 +1,42 @@
-import {
-  GoogleAuthProvider,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-} from "firebase/auth";
-import React, { useState } from "react";
+import React, { use, useRef, useState } from "react";
 import { FaEye } from "react-icons/fa";
-import { Link } from "react-router";
-import { auth } from "../Firebase/firebase.init";
+import { Link, useNavigate } from "react-router";
+
 import { IoEyeOff } from "react-icons/io5";
 import { toast, ToastContainer } from "react-toastify";
+import { AuthContext } from "../Provider/AuthContext";
 
 const SignIn = () => {
   const [show, setShow] = useState(false);
-  const [user, setUser] = useState(null);
-  const googleProvider = new GoogleAuthProvider();
+  const {
+    user,
+    setUser,
+    signInWithEmailAndPasswordFunc,
+    googleSignin,
+    signOutFnc,
+    gitSignin,
+    sendRestPass,
+  } = use(AuthContext);
+
+  const emailRef = useRef(null);
+  const navigation =useNavigate()
+  // ---------------------------------------------
+  // sign in with Email----------------
   const handleSignin = (e) => {
     e.preventDefault();
     const email = e.target.email.value;
     const password = e.target.password.value;
-
-    signInWithEmailAndPassword(auth, email, password)
+    // ---------------emailVerified------------------------------
+    signInWithEmailAndPasswordFunc(email, password)
       .then((result) => {
-        console.log(result.user);
+        if (!result.user?.emailVerified) {
+          toast.error("Please veryfy your Mail");
+          return;
+        }
+
         toast("Successfully Signed In");
         setUser(result.user);
+        navigation('/')
       })
       .catch((error) => {
         console.log(error);
@@ -45,9 +57,9 @@ const SignIn = () => {
         }
       });
   };
-
+  // --------------signout-----------------
   const handleSignout = () => {
-    signOut(auth)
+    signOutFnc()
       .then(() => {
         toast("Signout successful");
         setUser(null);
@@ -56,13 +68,41 @@ const SignIn = () => {
         toast.error(e.message);
       });
   };
-
+  // ----------reset pass-----
+  const handleforgetpass = () => {
+    const email = emailRef.current.value;
+    sendRestPass(email)
+      .then(() => {
+        toast("reset mail sent");
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        // const errorMessage = error.message;
+        // ..
+        console.log(errorCode);
+      });
+  };
+  // --------------signIn google-----------------
   const handleGoogleSignin = () => {
-    signInWithPopup(auth, googleProvider)
+    googleSignin()
       .then((result) => {
         console.log(result);
         toast("Successfully Signed In");
-        setUser(result.user)
+        setUser(result.user);
+        navigation('/')
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+  // --------------signIn git-----------------
+  const handleGithubSignin = () => {
+    gitSignin()
+      .then((result) => {
+        console.log(result);
+        toast("Successfully Signed In");
+        setUser(result.user);
+        navigation('/')
       })
       .catch((error) => {
         console.log(error);
@@ -120,6 +160,7 @@ const SignIn = () => {
                   <input
                     type="email"
                     name="email"
+                    ref={emailRef}
                     placeholder="example@email.com"
                     className="input input-bordered w-full bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   />
@@ -143,7 +184,13 @@ const SignIn = () => {
                     {show ? <FaEye></FaEye> : <IoEyeOff />}
                   </span>
                 </div>
-
+                <button
+                  onClick={handleforgetpass}
+                  type="button"
+                  className="hover:underline"
+                >
+                  Forget PassWord?
+                </button>
                 <button type="submit" className="my-btn">
                   Login
                 </button>
@@ -167,6 +214,18 @@ const SignIn = () => {
                     className="w-5 h-5"
                   />
                   Continue with Google
+                </button>
+                <button
+                  type="button"
+                  onClick={handleGithubSignin}
+                  className=" flex items-center justify-center gap-3 bg-white text-gray-800 px-5 py-2 rounded-lg w-full font-semibold hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  <img
+                    src="https://img.icons8.com/?size=100&id=16318&format=png&color=000000"
+                    alt="google"
+                    className="w-5 h-5"
+                  />
+                  Continue with GitHub
                 </button>
 
                 <p className="text-center text-sm text-white/80 mt-3">

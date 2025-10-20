@@ -1,19 +1,22 @@
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import React, { useState } from "react";
-import { Link } from "react-router";
-import { auth } from "../Firebase/firebase.init";
+import React, { use, useState } from "react";
+import { Link, Navigate, useNavigate } from "react-router";
 import { toast, ToastContainer } from "react-toastify";
 import { FaEye } from "react-icons/fa";
 import { IoEyeOff } from "react-icons/io5";
+import { AuthContext } from "../Provider/AuthContext";
 
 const SignUp = () => {
+  const { createWithEmail, updateUser, verifyMail } = use(AuthContext);
   // const [error, setError]= useState("")
+  const navigate = useNavigate();
   const [show, setShow] = useState(false);
   const handleSignup = (e) => {
     e.preventDefault();
+    const displayName = e.target.name.value;
+    const photoURL = e.target.photo.value;
     const email = e.target.email.value;
     const password = e.target.password.value;
-    console.log("SignUp", { email, password });
+    // console.log("SignUp", { displayName, photoURL, email, password });
 
     const reqPass =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()\-_=+])[A-Za-z\d@$!%*?&#^()\-_=+]{6,}$/;
@@ -25,18 +28,27 @@ const SignUp = () => {
       return;
     }
 
-    createUserWithEmailAndPassword(auth, email, password)
+    createWithEmail(email, password)
       .then((result) => {
         console.log(result);
-        toast("successfully creat an account");
-        e.target.reset()
+        updateUser(displayName, photoURL)
+          .then(() => {
+            console.log(result);
+            verifyMail().then(() => {
+              toast("Verifi mail sent")
+            });
+            toast("successfully creat an account");
+          })
+          .catch((error) => {
+            toast(error.message);
+          });
+        e.target.reset();
+        navigate("/signin");
       })
       .catch((error) => {
         console.log(error);
         if (error.code === "auth/email-already-in-use") {
-          toast.error(
-            "User already exists in the database."
-          );
+          toast.error("User already exists in the database.");
         } else if (error.code === "auth/weak-password") {
           toast.error("Use at least 6  digits For Password");
         } else if (error.code === "auth/invalid-email") {
@@ -84,6 +96,26 @@ const SignUp = () => {
             </h2>
 
             <form onSubmit={handleSignup} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Your Name"
+                  className="input input-bordered w-full bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-pink-400"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Photo Url
+                </label>
+                <input
+                  type="text"
+                  name="photo"
+                  placeholder="https//: photoURL"
+                  className="input input-bordered w-full bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-pink-400"
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Email</label>
                 <input
